@@ -1,9 +1,9 @@
-# \[Group name\]
+# \[JTS\]
 
 **Group members:**
-- A
-- B
-- C
+- mcp656
+- 0
+- 0
 
 This repository contains  
 1. Inaugural project. 
