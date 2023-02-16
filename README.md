@@ -2,8 +2,8 @@
 
 **Group members:**
 - mcp656
-- 0
-- 0
+- 
+- 
 
 This repository contains  
 1. Inaugural project. 
