@@ -1,9 +1,7 @@
 # \[JTS\]
 
 **Group members:**
-- mcp656
-- 
-- 
+- Jonas Schmidt (mcp656)
 
 This repository contains  
 1. Inaugural project. 
