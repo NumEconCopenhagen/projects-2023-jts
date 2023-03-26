@@ -200,7 +200,7 @@ class HouseholdSpecializationModelClass:
         bounds = ((0.5, 0.99), (0.01, 0.33))
 
         # guess
-        initial_guess = [0.8, 0.1]
+        initial_guess = [0.8, 0.1] 
 
         # solver
         solution = optimize.minimize(objective, initial_guess, method='Nelder-Mead', bounds=bounds)
