@@ -5,6 +5,7 @@ import numpy as np
 from scipy import optimize
 import pandas as pd 
 import matplotlib.pyplot as plt
+import warnings
 
 class HouseholdSpecializationModelClass:
 
@@ -135,7 +136,8 @@ class HouseholdSpecializationModelClass:
         initial_guess = [12, 12, 12, 12]
 
         # solver
-        sol = optimize.minimize(objective, initial_guess, method = 'SLSQP', bounds=bounds, constraints=constraints)
+        sol = optimize.minimize(objective, initial_guess, method = 'SLSQP', bounds=bounds,
+                                 constraints=constraints, tol = 0.00000000001) # low tolerance for a wrong result
 
         # save results
         opt.LM = sol.x[0]
@@ -150,9 +152,60 @@ class HouseholdSpecializationModelClass:
         return opt
     
     def solve_wF_vec(self,discrete=False):
+        """ solve model for vector of female wages """
         
-        pass
+        par = self.par
+        sol = self.sol
 
-model = HouseholdSpecializationModelClass()
-model.solve(do_print=True)
-opt = model.solve()
+        for i, wF in enumerate(par.wF_vec):
+            par.wF = wF
+            if discrete == True:
+                opt = self.solve_discrete()
+            elif discrete == False: 
+                opt = self.solve()
+            sol.LM_vec[i] = opt.LM
+            sol.HM_vec[i] = opt.HM
+            sol.LF_vec[i] = opt.LF
+            sol.HF_vec[i] = opt.HF
+
+
+    def run_regression(self):
+        """ run regression """
+
+        par = self.par
+        sol = self.sol
+
+        x = np.log(par.wF_vec)
+        y = np.log(sol.HF_vec/sol.HM_vec)
+        A = np.vstack([np.ones(x.size),x]).T
+        sol.beta0,sol.beta1 = np.linalg.lstsq(A,y,rcond=None)[0]
+
+    def estimate(self, alpha=None, sigma=None):
+        """ estimate alpha and sigma """
+
+        par = self.par
+        sol = self.sol 
+
+        # objective function
+        def objective(x):
+
+            par.alpha = x[0]
+            par.sigma = x[1]
+
+            self.solve_wF_vec()
+            self.run_regression()
+            return (par.beta0_target - sol.beta0)**2 + (par.beta1_target - sol.beta1)**2
+        
+        # bounds
+        bounds = ((0.5, 0.99), (0.01, 0.33))
+
+        # guess
+        initial_guess = [0.8, 0.1]
+
+        # solver
+        solution = optimize.minimize(objective, initial_guess, method='Nelder-Mead', bounds=bounds)
+        
+        sol.alpha = solution.x[0]
+        sol.sigma = solution.x[1]
+
+        return sol
