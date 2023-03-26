@@ -1,5 +1,3 @@
-# \[JTS\]
-
 **Group members:**
 - Jonas Schmidt (mcp656)
 
