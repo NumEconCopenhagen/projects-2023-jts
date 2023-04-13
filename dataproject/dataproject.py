@@ -9,7 +9,7 @@ def norm_col(col):
     return norm_col
 
 
-def cum_ret_plot(data, stock, ax_data=None):
+def cum_ret_plot(data, stock, fig = 1, ax_data=None):
     if ax_data is None:
         ax_data = data
 
@@ -18,7 +18,7 @@ def cum_ret_plot(data, stock, ax_data=None):
     # second plot of OMXC25 which contains the positional arg: ax = ax
     data.plot(y='^OMXC25',
               ax=ax,
-              title = f'Figure 1: Cumulative Return of {stock} compared to OMXC25',
+              title = f'Figure {fig}: Cumulative Return of {stock} compared to OMXC25',
               ylabel = 'Cumulative Return')
     # display plot
     plt.show()
