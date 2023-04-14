@@ -3,10 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def norm_col(col):
-    col_sum = col.sum()
-    norm_col = col / col_sum
-    return norm_col
+def calculate_returns(data):
+    # Calculate monthly returns
+    data_r = data.pct_change()
+
+    # Calculate cumulative returns
+    data_cr = (1 + data_r).cumprod()
+
+    return data_r, data_cr
 
 
 def cum_ret_plot(data, stock, fig = 1, ax_data=None):
@@ -22,3 +26,8 @@ def cum_ret_plot(data, stock, fig = 1, ax_data=None):
               ylabel = 'Cumulative Return')
     # display plot
     plt.show()
+
+def norm_col(col):
+    col_sum = col.sum()
+    norm_col = col / col_sum
+    return norm_col
