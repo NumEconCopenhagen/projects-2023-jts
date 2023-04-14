@@ -1,14 +1,15 @@
 # Data analysis project
 
-Our project is titled **PROJECT TITLE** and is about EXPLAIN.
+The project, named "Women on Board," aims to explore the potential correlation between the C25 stock performance and the presence of female representation on boards of directors.
 
 The **results** of the project can be seen from running [dataproject.ipynb](dataproject.ipynb).
 
-We apply the **following datasets**:
+I apply the **following datasets**:
 
-1. dataX.csv (*source*) 
-1. dataY.csv (*source*)
+1. C25F.csv (source: https://finans.dk/karriere/ECE15412780/danske-elitevirksomheder-naar-milepael-for-kvinder-i-ledelse/)
 
 **Dependencies:** Apart from a standard Anaconda Python 3 installation, the project requires the following installations:
 
-``pip install matplotlib-venn``
+#%pip install yfinance
+
+#%pip install adjustText
