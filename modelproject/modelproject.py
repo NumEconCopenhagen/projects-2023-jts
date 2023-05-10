@@ -5,30 +5,30 @@ import random
 def n_ss(variables, s_K, s_H, n, g, delta, alpha, varphi):
     """
     Args:
-    variables (list or tuple): Contains two variables to be solved for, capital and human capital
-    s_K      (float): Savings rate in capital
-    s_H      (float): Savings rate in human capital
-    n        (float): Population growth rate
-    g        (float): TFP growth rate
-    delta    (float): Depreciation rate
-    alpha    (float): Capital share in the production function
-    varphi   (float): Human capital share in the production function
+    variables (list or tuple): Contains two variables to be solved for: capital and human capital
+    s_K               (float): Savings rate in capital
+    s_H               (float): Savings rate in human capital
+    n                 (float): Population growth rate
+    g                 (float): TFP growth rate
+    delta             (float): Depreciation rate
+    alpha             (float): Capital share in the production function
+    varphi            (float): Human capital share in the production function
     
     Returns:
     Capital and human capital in steady state
     """
-    #Variables to be solved for, capital and human capital
+    # Variables to be solved for: capital and human capital
     k, h = variables
     
     # Check for edge cases
     if k <= 0 or h <= 0:
-        return [1e10, 1e10]  # Return a large residual to indicate a poor solution
+        return [1e10, 1e10]  # Return a very large residual to indicate a poor solution
 
     # Sets the Solow equations in steady state
     n_ss_solow_k = (1 / ((1 + n) * (1 + g))) * (s_K * k**alpha * h**varphi - (n + g + delta + n * g) * k)
     n_ss_solow_h = (1 / ((1 + n) * (1 + g))) * (s_H * k**alpha * h**varphi - (n + g + delta + n * g) * h)
 
-    return [n_ss_solow_k, n_ss_solow_h]
+    return n_ss_solow_k, n_ss_solow_h
 
 
 def multi_start(num_guesses=100, bounds=[0.1, 10], fun=n_ss, args= None, method='hybr'):
@@ -67,7 +67,4 @@ def multi_start(num_guesses=100, bounds=[0.1, 10], fun=n_ss, args= None, method=
             smallest_residual = residual_norm
             ms_ss_k, ms_ss_h = sol.x
 
-    # Print the steady-state values for capital and human capital
-    print(f'Muti-Start Solution:\n\
-There are {ms_ss_k:.3f} units of capital, and {ms_ss_h:.3f} units of human capital in steady state\n\
-The functions residual is {smallest_residual}')
+    return ms_ss_k, ms_ss_h, smallest_residual
