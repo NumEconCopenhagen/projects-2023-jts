@@ -2,7 +2,7 @@ import numpy as np
 from scipy import optimize
 import random
 
-def n_ss(variables, s_K, s_H, n, g, delta, alpha, varphi):
+def numerical_steady_state(variables, s_K, s_H, n, g, delta, alpha, varphi):
     """
     Args:
     variables (list or tuple): Contains two variables to be solved for: capital and human capital
@@ -15,14 +15,15 @@ def n_ss(variables, s_K, s_H, n, g, delta, alpha, varphi):
     varphi            (float): Human capital share in the production function
     
     Returns:
-    Capital and human capital in steady state
+    Capital and human capital equations in steady state
     """
     # Variables to be solved for: capital and human capital
     k, h = variables
     
     # Check for edge cases
     if k <= 0 or h <= 0:
-        return [1e10, 1e10]  # Return a very large residual to indicate a poor solution
+        # Return a very large residual to indicate a poor solution
+        return [1e10, 1e10]
 
     # Sets the Solow equations in steady state
     n_ss_solow_k = (1 / ((1 + n) * (1 + g))) * (s_K * k**alpha * h**varphi - (n + g + delta + n * g) * k)
@@ -31,14 +32,14 @@ def n_ss(variables, s_K, s_H, n, g, delta, alpha, varphi):
     return n_ss_solow_k, n_ss_solow_h
 
 
-def multi_start(num_guesses=100, bounds=[0.1, 10], fun=n_ss, args= None, method='hybr'):
+def multi_start(num_guesses=100, bounds=[0.1, 10], fun=numerical_steady_state, args= None, method='hybr'):
     """
     Performs multi-start optimization to find the steady state solutions for k and h.
     
     Args:
     num_guesses     (int): The number of random initial guesses, default=100
     bounds        (tuple): The bounds for the random initial guesses, default=[0.1, 10]
-    fun        (function): The function to be optimized, default=n_ss
+    fun        (function): The function to be optimized, default=numerical_steady_state
     args          (tuple): The tuple of arguments for the function, default= None
     method       (method): The optimization method to use, default='hybr'
     
@@ -57,7 +58,7 @@ def multi_start(num_guesses=100, bounds=[0.1, 10], fun=n_ss, args= None, method=
         initial_guess = random.sample(random_samples, 2)
 
         # Solve the optimization problem with the current initial guess
-        sol = optimize.root(fun=fun, x0=initial_guess, args=args, method=method)
+        sol = optimize.root(fun = fun, x0 = initial_guess, args = args, method = method)
         
         # Calculate the residual norm (Euclidean norm) of the current solution
         residual_norm = np.linalg.norm(sol.fun)
@@ -68,3 +69,53 @@ def multi_start(num_guesses=100, bounds=[0.1, 10], fun=n_ss, args= None, method=
             ms_ss_k, ms_ss_h = sol.x
 
     return ms_ss_k, ms_ss_h, smallest_residual
+
+def null_clines(s_K, s_H, g, n, alpha, varphi, delta, Max = 10, N = 500):
+    """
+    Args:
+    s_K               (float): Savings rate in capital
+    s_H               (float): Savings rate in human capital
+    n                 (float): Population growth rate
+    g                 (float): TFP growth rate
+    delta             (float): Depreciation rate
+    alpha             (float): Capital share in the production function
+    varphi            (float): Human capital share in the production function
+    Max               (float): Maximum value of k
+    N                   (int): Number of values of k
+    
+    Returns:
+    Null-clines for capital and human capital
+    """
+
+    # Create a vector for N values of k from 0 to Max 
+    k_vec = np.linspace(1e-4, Max, N)
+
+    # Create two empty N-size arrays to store the null-clines
+    h_vec_k, h_vec_h = np.empty(N), np.empty(N)
+
+    # Set root_error to False
+    root_error = False
+
+    # Iterate through each value of k in k_vec
+    for i, k in enumerate(k_vec):
+        
+        # Determine the null-clines 
+        null_k = lambda h: numerical_steady_state((k, h), s_K, s_H, n, g, delta, alpha, varphi)[0]
+        null_h = lambda h: numerical_steady_state((k, h), s_K, s_H, n, g, delta, alpha, varphi)[1]
+
+        try:
+            # Find roots for the null-clines
+            sol_k = optimize.root_scalar(f = null_k, method = 'brentq', bracket = [1e-20, 50])
+            sol_h = optimize.root_scalar(f = null_h, method = 'brentq', bracket = [1e-20, 50])
+
+            # Save the roots
+            h_vec_k[i], h_vec_h[i] = sol_k.root, sol_h.root
+    
+        except ValueError:
+            if root_error == False:
+                print('Due to f(a)f(b) > 0 the method failed to find roots for a number of or all values of k')
+                root_error = True  # Set the flag to True
+            h_vec_k[i], h_vec_h[i] = np.nan, np.nan
+
+    # Return array of solutions
+    return k_vec, h_vec_k, h_vec_h
