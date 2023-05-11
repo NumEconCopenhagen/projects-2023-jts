@@ -2,7 +2,7 @@ import numpy as np
 from scipy import optimize
 import random
 
-def numerical_steady_state(variables, s_K, s_H, n, g, delta, alpha, varphi):
+def n_ss_solow(variables, s_K, s_H, n, g, delta, alpha, varphi):
     """
     Args:
     variables (list or tuple): Contains two variables to be solved for: capital and human capital
@@ -32,16 +32,16 @@ def numerical_steady_state(variables, s_K, s_H, n, g, delta, alpha, varphi):
     return n_ss_solow_k, n_ss_solow_h
 
 
-def multi_start(num_guesses=100, bounds=[0.1, 10], fun=numerical_steady_state, args= None, method='hybr'):
+def multi_start(num_guesses=100, bounds=[0.1, 10], fun=n_ss_solow, args= None, method='hybr'):
     """
     Performs multi-start optimization to find the steady state solutions for k and h.
     
     Args:
     num_guesses     (int): The number of random initial guesses, default=100
     bounds        (tuple): The bounds for the random initial guesses, default=[0.1, 10]
-    fun        (function): The function to be optimized, default=numerical_steady_state
-    args          (tuple): The tuple of arguments for the function, default= None
-    method       (method): The optimization method to use, default='hybr'
+    fun        (function): The function to be optimized, default = n_ss_solow
+    args          (tuple): The tuple of arguments for the function, default = None
+    method       (method): The optimization method to use, default = 'hybr'
     
     Returns:
     Prints the steady state values for k and h, and the residual of the function
@@ -100,8 +100,8 @@ def null_clines(s_K, s_H, g, n, alpha, varphi, delta, Max = 10, N = 500):
     for i, k in enumerate(k_vec):
         
         # Determine the null-clines 
-        null_k = lambda h: numerical_steady_state((k, h), s_K, s_H, n, g, delta, alpha, varphi)[0]
-        null_h = lambda h: numerical_steady_state((k, h), s_K, s_H, n, g, delta, alpha, varphi)[1]
+        null_k = lambda h: - n_ss_solow((k, h), s_K, s_H, n, g, delta, alpha, varphi)[0]
+        null_h = lambda h: - n_ss_solow((k, h), s_K, s_H, n, g, delta, alpha, varphi)[1]
 
         try:
             # Find roots for the null-clines
