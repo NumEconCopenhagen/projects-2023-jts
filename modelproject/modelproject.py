@@ -11,8 +11,8 @@ def n_ss_solow(variables, s_K, s_H, n, g, delta, alpha, varphi):
     n                 (float): Population growth rate
     g                 (float): TFP growth rate
     delta             (float): Depreciation rate
-    alpha             (float): Physical capital share in the production function
-    varphi            (float): Human capital share in the production function
+    alpha             (float): Output elasticity of physical capital
+    varphi            (float): Output elasticity of human capital
     
     Returns:
     Physical capital and human capital equations in steady state
@@ -33,13 +33,13 @@ def n_ss_solow(variables, s_K, s_H, n, g, delta, alpha, varphi):
     return n_ss_solow_k, n_ss_solow_h
 
 
-def multi_start(num_guesses=100, bounds=[1e-5, 10], fun=n_ss_solow, args= None, method='hybr'):
+def multi_start(num_guesses=100, bounds=[1e-5, 50], fun=n_ss_solow, args= None, method='hybr'):
     """
     Performs multi-start optimization to find the steady state solutions for k and h.
     
     Args:
     num_guesses     (int): The number of random initial guesses, default = 100
-    bounds        (tuple): The bounds for the random initial guesses, default = [1e-5, 10]
+    bounds        (tuple): The bounds for the random initial guesses, default = [1e-5, 50]
     fun        (function): The function to be optimized, default = n_ss_solow
     args          (tuple): The tuple of arguments for the function, default = None
     method       (method): The optimization method to use, default = 'hybr'
@@ -72,7 +72,7 @@ def multi_start(num_guesses=100, bounds=[1e-5, 10], fun=n_ss_solow, args= None, 
     # Return optimal solutions 
     return ms_ss_k, ms_ss_h, smallest_residual
 
-def null_clines(s_K, s_H, g, n, alpha, varphi, delta, Max = 10, N = 500):
+def null_clines(s_K, s_H, g, n, alpha, varphi, delta, Max = 50, N = 500):
     """
     Args:
     s_K               (float): Savings rate in physical capital
@@ -80,8 +80,8 @@ def null_clines(s_K, s_H, g, n, alpha, varphi, delta, Max = 10, N = 500):
     n                 (float): Population growth rate
     g                 (float): TFP growth rate
     delta             (float): Depreciation rate
-    alpha             (float): Physical capital share in the production function
-    varphi            (float): Human capital share in the production function
+    alpha             (float): Output elasticity of physical capital
+    varphi            (float): Output elasticity of human capital
     Max               (float): Maximum value of k
     N                   (int): Number of values of k
     
@@ -107,8 +107,8 @@ def null_clines(s_K, s_H, g, n, alpha, varphi, delta, Max = 10, N = 500):
 
         try:
             # Find roots for the null-clines
-            sol_k = optimize.root_scalar(f = null_k, method = 'brentq', bracket = [1e-20, 20])
-            sol_h = optimize.root_scalar(f = null_h, method = 'brentq', bracket = [1e-20, 20])
+            sol_k = optimize.root_scalar(f = null_k, method = 'brentq', bracket = [1e-20, 50])
+            sol_h = optimize.root_scalar(f = null_h, method = 'brentq', bracket = [1e-20, 50])
 
             # Save the roots
             h_vec_k[i], h_vec_h[i] = sol_k.root, sol_h.root
@@ -127,6 +127,67 @@ def find_intersection(x, y, z):
     idx = np.where(np.diff(np.sign(y - z)))
 
     # Return value of x, y and z at index
-    return x[idx], y[idx], z[idx]
+    return x[idx[0][0]], y[idx[0][0]], z[idx[0][0]]
 
+def simulate_growth_paths(s_K, s_H, n, g, delta, alpha, varphi, 
+                          L0=1.0, A0=1.0, K0=1.0, H0=1.0, T=300, shock_time=None, shock_increase=None):
+    """
+    Simulates the growth paths of technology-adjusted per capita physical capital, human capital, and output given the parameters and initial conditions.
 
+    Args:
+        s_K                 (float): Savings rate in physical capital
+        s_H                 (float): Savings rate in human capital
+        n                   (float): Population growth rate
+        g                   (float): Technological progress rate
+        delta               (float): Depreciation rate
+        alpha               (float): Output elasticity of physical capital
+        varphi              (float): Output elasticity of human capital
+        L0                  (float): Initial labor, default = 1.0
+        A0                  (float): Initial technology, default = 1.0
+        K0                  (float): Initial physical capital, default = 1.0
+        H0                  (float): Initial human capital, default = 1.0.
+        T                     (int): Number of periods, default = 300.
+        shock_time  (int, optional): The time at which s_H increases. If None, there's no increase. Default = None
+        shock_increase      (float): The amount by which s_H increases at the shock time. Default = 0
+
+    Returns:
+        T periods of technology-adjusted per capita physical capital, human capital, and output
+    """
+
+    # Initialize arrays to store the variables
+    L = np.zeros(T)
+    A = np.zeros(T)
+    K = np.zeros(T)
+    H = np.zeros(T)
+    Y = np.zeros(T)
+    K_pc = np.zeros(T)
+    H_pc = np.zeros(T)
+    Y_pc = np.zeros(T)
+
+    # Set initial values
+    L[0] = L0
+    A[0] = A0
+    K[0] = K0
+    H[0] = H0
+    Y[0] = (K[0]**alpha) * (H[0]**varphi) * (A[0]*L[0])**(1-alpha-varphi)
+    K_pc[0] = K[0] / (A[0]*L[0])
+    H_pc[0] = H[0] / (A[0]*L[0])
+    Y_pc[0] = Y[0] / (A[0]*L[0])
+
+    # Simulation
+    for t in range(1, T):
+        L[t] = (1 + n) * L[t-1]
+        A[t] = (1 + g) * A[t-1]
+        K[t] = s_K * Y[t-1] + (1 - delta) * K[t-1]
+
+        # Increase s_H at shock time
+        if t == shock_time:
+            s_H += shock_increase
+
+        H[t] = s_H * Y[t-1] + (1 - delta) * H[t-1]
+        Y[t] = (K[t]**alpha) * (H[t]**varphi) * (A[t]*L[t])**(1-alpha-varphi)
+        K_pc[t] = K[t] / (A[t]*L[t])
+        H_pc[t] = H[t] / (A[t]*L[t])
+        Y_pc[t] = Y[t] / (A[t]*L[t])
+
+    return K_pc, H_pc, Y_pc
