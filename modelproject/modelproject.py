@@ -5,19 +5,19 @@ import random
 def n_ss_solow(variables, s_K, s_H, n, g, delta, alpha, varphi):
     """
     Args:
-    variables (list or tuple): Contains two variables to be solved for: capital and human capital
-    s_K               (float): Savings rate in capital
+    variables (list or tuple): Contains two variables to be solved for: physical capital and human capital
+    s_K               (float): Savings rate in physical capital
     s_H               (float): Savings rate in human capital
     n                 (float): Population growth rate
     g                 (float): TFP growth rate
     delta             (float): Depreciation rate
-    alpha             (float): Capital share in the production function
+    alpha             (float): Physical capital share in the production function
     varphi            (float): Human capital share in the production function
     
     Returns:
-    Capital and human capital equations in steady state
+    Physical capital and human capital equations in steady state
     """
-    # Variables to be solved for: capital and human capital
+    # Variables to be solved for: physical capital and human capital
     k, h = variables
     
     # Check for edge cases
@@ -75,18 +75,18 @@ def multi_start(num_guesses=100, bounds=[1e-5, 10], fun=n_ss_solow, args= None, 
 def null_clines(s_K, s_H, g, n, alpha, varphi, delta, Max = 10, N = 500):
     """
     Args:
-    s_K               (float): Savings rate in capital
+    s_K               (float): Savings rate in physical capital
     s_H               (float): Savings rate in human capital
     n                 (float): Population growth rate
     g                 (float): TFP growth rate
     delta             (float): Depreciation rate
-    alpha             (float): Capital share in the production function
+    alpha             (float): Physical capital share in the production function
     varphi            (float): Human capital share in the production function
     Max               (float): Maximum value of k
     N                   (int): Number of values of k
     
     Returns:
-    Null-clines for capital and human capital
+    Null-clines for physical capital and human capital
     """
 
     # Create a vector for N values of k from 0 to Max 
