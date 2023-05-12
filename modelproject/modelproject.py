@@ -5,17 +5,17 @@ import random
 def n_ss_solow(variables, s_K, s_H, n, g, delta, alpha, varphi):
     """
     Args:
-    variables (list or tuple): Contains two variables to be solved for: physical capital and human capital
-    s_K               (float): Savings rate in physical capital
-    s_H               (float): Savings rate in human capital
-    n                 (float): Population growth rate
-    g                 (float): TFP growth rate
-    delta             (float): Depreciation rate
-    alpha             (float): Output elasticity of physical capital
-    varphi            (float): Output elasticity of human capital
+        variables (list or tuple): Contains two variables to be solved for: physical capital and human capital
+        s_K               (float): Savings rate in physical capital
+        s_H               (float): Savings rate in human capital
+        n                 (float): Population growth rate
+        g                 (float): TFP growth rate
+        delta             (float): Depreciation rate
+        alpha             (float): Output elasticity of physical capital
+        varphi            (float): Output elasticity of human capital
     
     Returns:
-    Physical capital and human capital equations in steady state
+        Physical capital and human capital equations in steady state
     """
     # Variables to be solved for: physical capital and human capital
     k, h = variables
@@ -38,14 +38,14 @@ def multi_start(num_guesses=100, bounds=[1e-5, 50], fun=n_ss_solow, args= None, 
     Performs multi-start optimization to find the steady state solutions for k and h.
     
     Args:
-    num_guesses     (int): The number of random initial guesses, default = 100
-    bounds        (tuple): The bounds for the random initial guesses, default = [1e-5, 50]
-    fun        (function): The function to be optimized, default = n_ss_solow
-    args          (tuple): The tuple of arguments for the function, default = None
-    method       (method): The optimization method to use, default = 'hybr'
+        num_guesses     (int): The number of random initial guesses, default = 100
+        bounds        (tuple): The bounds for the random initial guesses, default = [1e-5, 50]
+        fun        (function): The function to be optimized, default = n_ss_solow
+        args          (tuple): The tuple of arguments for the function, default = None
+        method       (method): The optimization method to use, default = 'hybr'
     
     Returns:
-    Prints the steady state values for k and h, and the residual of the function
+        Prints the steady state values for k and h, and the residual of the function
     """
     # Initialize the smallest residual as infinity
     smallest_residual = np.inf
@@ -75,18 +75,18 @@ def multi_start(num_guesses=100, bounds=[1e-5, 50], fun=n_ss_solow, args= None, 
 def null_clines(s_K, s_H, g, n, alpha, varphi, delta, Max = 50, N = 500):
     """
     Args:
-    s_K               (float): Savings rate in physical capital
-    s_H               (float): Savings rate in human capital
-    n                 (float): Population growth rate
-    g                 (float): TFP growth rate
-    delta             (float): Depreciation rate
-    alpha             (float): Output elasticity of physical capital
-    varphi            (float): Output elasticity of human capital
-    Max               (float): Maximum value of k
-    N                   (int): Number of values of k
+        s_K               (float): Savings rate in physical capital
+        s_H               (float): Savings rate in human capital
+        n                 (float): Population growth rate
+        g                 (float): TFP growth rate
+        delta             (float): Depreciation rate
+        alpha             (float): Output elasticity of physical capital
+        varphi            (float): Output elasticity of human capital
+        Max               (float): Maximum value of k
+        N                   (int): Number of values of k
     
     Returns:
-    Null-clines for physical capital and human capital
+        Null-clines for physical capital and human capital
     """
 
     # Create a vector for N values of k from 0 to Max 
@@ -123,6 +123,16 @@ def null_clines(s_K, s_H, g, n, alpha, varphi, delta, Max = 50, N = 500):
     return k_vec, h_vec_k, h_vec_h
 
 def find_intersection(x, y, z):
+    """
+    Args: 
+        x (dict): Enumerated values of x
+        y (dict): Enumerated values of y 
+        z (dict): Enumerated values of z
+    
+    Returns: 
+        Value at intersection of x, y and
+    """
+
     # Find index of intersection where the sign of (y - z) changes
     idx = np.where(np.diff(np.sign(y - z)))
 
