@@ -77,7 +77,7 @@ def cum_ret_plot(data: pd.DataFrame, stock: str, ref: str, fig: int = 1, ax_data
               ylabel = 'Cumulative Return')
 
     # Display plot
-    plt.show();
+    plt.show()
 
 
 def plot_scatter_with_labels(ax: plt.Axes, x: list, y: list, labels: list, title: str, xlabel: str, ylabel: str):
