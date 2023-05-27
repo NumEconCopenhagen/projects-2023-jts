@@ -160,7 +160,7 @@ def simulate_growth_paths(s_H, n, g, delta, alpha, varphi, s_K, T=300, shock_tim
         T periods of technology-adjusted per capita physical capital, human capital, output, wages, and rents
     """
     # Set values for s_H_0 and s_H_1:
-    s_H_1 = 0.0002
+    s_H_1 = 0.0001
 
     # Initialize arrays to store the variables
     L = np.zeros(T)
