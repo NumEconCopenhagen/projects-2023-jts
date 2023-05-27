@@ -2,7 +2,7 @@ import numpy as np
 from scipy import optimize
 import random
 
-def n_ss_solow(variables, s_K, s_H, n, g, delta, alpha, varphi):
+def solow_equations(variables, s_K, s_H, n, g, delta, alpha, varphi):
     """
     Args:
         variables (list or tuple): Contains two variables to be solved for: physical capital and human capital
@@ -15,25 +15,25 @@ def n_ss_solow(variables, s_K, s_H, n, g, delta, alpha, varphi):
         varphi            (float): Output elasticity of human capital
     
     Returns:
-        Physical capital and human capital equations in steady state
+        Solow equations for k_{t+1}-k_{t} = 0 and h_{t+1}-h_{t} = 0 
     """
     # Variables to be solved for: physical capital and human capital
     k, h = variables
     
-    # Check for edge cases
+    # Checks for edge cases, used in multi_start
     if k <= 0 or h <= 0:
         # Return a very large residual to indicate a poor solution
         return [np.inf, np.inf]
 
-    # Sets the Solow equations in steady state
-    n_ss_solow_k = (1 / ((1 + n) * (1 + g))) * (s_K * k**alpha * h**varphi - (n + g + delta + n * g) * k)
-    n_ss_solow_h = (1 / ((1 + n) * (1 + g))) * (s_H * k**alpha * h**varphi - (n + g + delta + n * g) * h)
+    # Set Solow equations for k_{t+1}-k_{t} = 0 and h_{t+1}-h_{t} = 0 
+    solow_k = (1 / ((1 + n) * (1 + g))) * (s_K * k**alpha * h**varphi - (n + g + delta + n * g) * k)
+    solow_h = (1 / ((1 + n) * (1 + g))) * (s_H * k**alpha * h**varphi - (n + g + delta + n * g) * h)
 
     # Return equations
-    return n_ss_solow_k, n_ss_solow_h
+    return solow_k, solow_h
 
 
-def multi_start(num_guesses=100, bounds=[1e-5, 50], fun=n_ss_solow, args= None, method='hybr'):
+def multi_start(num_guesses=100, bounds=[1e-5, 50], fun=solow_equations, args= None, method='hybr'):
     """
     Performs multi-start optimization to find the steady state solutions for k and h.
     
@@ -45,7 +45,7 @@ def multi_start(num_guesses=100, bounds=[1e-5, 50], fun=n_ss_solow, args= None, 
         method       (method): The optimization method to use, default = 'hybr'
     
     Returns:
-        Prints the steady state values for k and h, and the residual of the function
+        The steady state values for k, h and y, and the residual of the function
     """
     # Initialize the smallest residual as infinity
     smallest_residual = np.inf
@@ -67,10 +67,11 @@ def multi_start(num_guesses=100, bounds=[1e-5, 50], fun=n_ss_solow, args= None, 
         # If the residual norm is smaller than the current smallest residual, update the steady state of k and h and the smallest residual
         if residual_norm < smallest_residual:
             smallest_residual = residual_norm
-            ms_ss_k, ms_ss_h = sol.x
+            steady_state_k, steady_state_h = sol.x
     
     # Return optimal solutions 
-    return ms_ss_k, ms_ss_h, smallest_residual
+    return steady_state_k, steady_state_h, smallest_residual
+
 
 def null_clines(s_K, s_H, g, n, alpha, varphi, delta, Max = 50, N = 500):
     """
@@ -102,8 +103,8 @@ def null_clines(s_K, s_H, g, n, alpha, varphi, delta, Max = 50, N = 500):
     for i, k in enumerate(k_vec):
         
         # Determine the null-clines 
-        null_k = lambda h: - n_ss_solow((k, h), s_K, s_H, n, g, delta, alpha, varphi)[0]
-        null_h = lambda h: - n_ss_solow((k, h), s_K, s_H, n, g, delta, alpha, varphi)[1]
+        null_k = lambda h: solow_equations((k, h), s_K, s_H, n, g, delta, alpha, varphi)[0]
+        null_h = lambda h: solow_equations((k, h), s_K, s_H, n, g, delta, alpha, varphi)[1]
 
         try:
             # Find roots for the null-clines
@@ -139,30 +140,27 @@ def find_intersection(x, y, z):
     # Return value of x, y and z at index
     return x[idx[0][0]], y[idx[0][0]], z[idx[0][0]]
 
-def simulate_growth_paths(s_K, s_H, n, g, delta, alpha, varphi, 
-                          L0=1.0, A0=1.0, K0=1.0, H0=1.0, T=300, shock_time=None, shock_increase=None):
+def simulate_growth_paths(s_H, n, g, delta, alpha, varphi, s_K, T=300, shock_time=None, shock_increase=None, incr_savings = False):
     """
     Simulates the growth paths of technology-adjusted per capita physical capital, human capital, and output given the parameters and initial conditions.
 
     Args:
-        s_K                 (float): Savings rate in physical capital
         s_H                 (float): Savings rate in human capital
         n                   (float): Population growth rate
         g                   (float): Technological progress rate
         delta               (float): Depreciation rate
         alpha               (float): Output elasticity of physical capital
         varphi              (float): Output elasticity of human capital
-        L0                  (float): Initial labor, default = 1.0
-        A0                  (float): Initial technology, default = 1.0
-        K0                  (float): Initial physical capital, default = 1.0
-        H0                  (float): Initial human capital, default = 1.0.
+        s_K                 (float): Savings rate in physical capital
         T                     (int): Number of periods, default = 300.
         shock_time  (int, optional): The time at which s_H increases. If None, there's no increase. Default = None
         shock_increase      (float): The amount by which s_H increases at the shock time. Default = 0
 
     Returns:
-        T periods of technology-adjusted per capita physical capital, human capital, and output
+        T periods of technology-adjusted per capita physical capital, human capital, output, wages, and rents
     """
+    # Set values for s_H_0 and s_H_1:
+    s_H_1 = 0.0002
 
     # Initialize arrays to store the variables
     L = np.zeros(T)
@@ -170,21 +168,26 @@ def simulate_growth_paths(s_K, s_H, n, g, delta, alpha, varphi,
     K = np.zeros(T)
     H = np.zeros(T)
     Y = np.zeros(T)
-    K_pc = np.zeros(T)
-    H_pc = np.zeros(T)
-    Y_pc = np.zeros(T)
+    k = np.zeros(T)
+    h = np.zeros(T)
+    y = np.zeros(T)
+    w = np.zeros(T)  # wages
+    r = np.zeros(T)  # rents
 
     # Set initial values
-    L[0] = L0
-    A[0] = A0
-    K[0] = K0
-    H[0] = H0
+    L[0] = 1
+    A[0] = 1
+    K[0] = 1
+    H[0] = 1
     Y[0] = (K[0]**alpha) * (H[0]**varphi) * (A[0]*L[0])**(1-alpha-varphi)
-    K_pc[0] = K[0] / (A[0]*L[0])
-    H_pc[0] = H[0] / (A[0]*L[0])
-    Y_pc[0] = Y[0] / (A[0]*L[0])
 
-    # Simulation
+    k[0] = K[0] / (A[0]*L[0])
+    h[0] = H[0] / (A[0]*L[0])
+    y[0] = Y[0] / (A[0]*L[0])
+    w[0] = (1-alpha) * Y[0] / L[0]
+    r[0] = alpha * Y[0] / K[0]
+
+    # Create a simulation
     for t in range(1, T):
         L[t] = (1 + n) * L[t-1]
         A[t] = (1 + g) * A[t-1]
@@ -194,10 +197,15 @@ def simulate_growth_paths(s_K, s_H, n, g, delta, alpha, varphi,
         if t == shock_time:
             s_H += shock_increase
 
+        if incr_savings == True:
+            s_H += s_H_1 * y[t-1]
+
         H[t] = s_H * Y[t-1] + (1 - delta) * H[t-1]
         Y[t] = (K[t]**alpha) * (H[t]**varphi) * (A[t]*L[t])**(1-alpha-varphi)
-        K_pc[t] = K[t] / (A[t]*L[t])
-        H_pc[t] = H[t] / (A[t]*L[t])
-        Y_pc[t] = Y[t] / (A[t]*L[t])
+        k[t] = K[t] / (A[t]*L[t])
+        h[t] = H[t] / (A[t]*L[t])
+        y[t] = Y[t] / (A[t]*L[t])
+        w[t] = varphi * Y[t] / H[t]
+        r[t] = alpha * Y[t] / K[t]
 
-    return K_pc, H_pc, Y_pc
+    return k, h, y, w, r
